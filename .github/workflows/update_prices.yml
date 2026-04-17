@@ -1,0 +1,40 @@
+name: Update Notion Portfolio Prices
+
+on:
+  # Run every 30 minutes during trading hours (Mon–Fri).
+  # Times are in UTC (GitHub Actions cron is always UTC).
+  #
+  # SET (Thailand):  10:00–16:30 ICT (UTC+7)  ==  03:00–09:30 UTC
+  # US markets:       09:30–16:00 ET            ==  13:30–21:00 UTC  (covers both EDT and EST)
+  schedule:
+    - cron: "*/30 3-10 * * 1-5"     # SET trading window
+    - cron: "*/30 13-21 * * 1-5"    # US trading window
+
+  # Allow manual trigger from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Update Notion prices
+        env:
+          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+          NOTION_DATABASE_ID: ${{ secrets.NOTION_DATABASE_ID }}
+        run: python update_prices.py
